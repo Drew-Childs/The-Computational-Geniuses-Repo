@@ -18,21 +18,23 @@ public:
 		Make from Ingredients
 	*/
 
-	void search();
+	void search(vector<string> keyWord);
 
 	void Recommended();
 
-	void getHistory();
+	void addHistory(Food food);
+	void removeHistory();
+	list<Food> getHistory();
 
 	void createFood(string name, vector<ingred> recipe);
 
-	void favorites();
+	void favorite(Food food);
 
 	void shoppingList();
 
-	void createFromOwn(vector<ingred> ingredients);
-
 private:
 	vector<Food> foodList;
+	list<Food> history;
+	vector<Food> shoppingCart;
 };
 
