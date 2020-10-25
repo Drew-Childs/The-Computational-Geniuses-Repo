@@ -2,10 +2,9 @@ import tkinter as tk
 import tkinter.font as tkFont
 from menu import Menu
 import random
-
-from PIL import Image, ImageTk
+from PIL import Image, ImageFilter, ImageTk
+from urllib.request import Request, urlopen
 from io import BytesIO
-from urllib import request
 
 root = tk.Tk()
 global m
@@ -43,6 +42,9 @@ class Application(tk.Frame):
         b5 = tk.Button(sideBar, text="History", command=lambda: self.switchScene(historyScene))
         b5.place(relx=.1, rely=.575, relw=.8, relh=.1)
 
+        b6 = tk.Button(sideBar, text="Custom Recipe", command= lambda: self.switchScene(customScene))
+        b6.place(relx=.1, rely=.6875, relw=.8, relh=.1)
+
         exitButton = tk.Button(sideBar, text="Exit", command=lambda: self.master.destroy())
         exitButton.place(relx=.1, rely=.885, relw=.8, relh=.1)
 
@@ -59,17 +61,30 @@ class Application(tk.Frame):
         self.currFrame.pack()
 
     def displayDetails(self, food):
-
         m.history.append(food)
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
+        req = Request("https://simplyrecipes.com/wp-content/uploads/2017/09/2017-10-04-ChickenScampi-6.jpg", headers=headers)  # Requests to open website
+        picture = urlopen(req).read()
+        im = Image.open(BytesIO(picture))
+        im = im.resize((600, 600), resample=3)
+        photo = ImageTk.PhotoImage(im)
 
         newWindow = tk.Toplevel(bg="#990000")
         tk.Label(newWindow, text=food.name, font=tkFont.Font(size=20), bg="#990000", fg="white").pack(side="top")
+
+        canvas = tk.Canvas(newWindow, width=400, height=400)
+        canvas.pack()
+        img = ImageTk.PhotoImage(im)
+        canvas.create_image(100, 100, anchor=tk.N, image=img)
+
         tk.Label(newWindow, text=food.description, font=tkFont.Font(size=10), wraplength=200, bg="#990000", fg="white").pack(side="top")
         tk.Label(newWindow, text=("{:10} {}".format("Prep Time: ", food.prepTime)), bg="#990000", fg="white").pack(side="top")
         tk.Label(newWindow, text=("{:10} {}".format("Cook Time: ", food.cookTime)), bg="#990000", fg="white").pack(side="top")
         tk.Label(newWindow, text=("{:10} {}".format("Servings: ", food.servings)), bg="#990000", fg="white").pack(side="top")
 
-        tk.Label(newWindow, text="Ingredients:").pack(side="top")
+        tk.Label(newWindow, text="Ingredients:", bg="#990000").pack(side="top")
         ingredients = tk.Listbox(newWindow, selectmode=tk.MULTIPLE, width=200, justify=tk.CENTER)
         for x in food.recipe:
             ingredients.insert(tk.END, x)
@@ -98,6 +113,24 @@ class menuScene(tk.Frame):
 
         header = tk.Message(frame, text="Menu ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=400)
         header.pack(side="top")
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
+
+        req = Request("https://simplyrecipes.com/wp-content/uploads/2017/09/2017-10-04-ChickenScampi-6.jpg",
+                      headers=headers)  # Requests to open website
+        picture = urlopen(req).read()
+
+        im = Image.open(BytesIO(picture))
+
+        im = im.resize((600, 600), Image.ANTIALIAS)
+
+        photo = ImageTk.PhotoImage(im)
+
+        canvas = tk.Canvas(frame, width=600, height=600)
+        canvas.pack()
+        img = ImageTk.PhotoImage(im)
+        canvas.create_image(100, 100, anchor=tk.NW, image=img)
 
 class favoriteScene(tk.Frame):
     def __init__(self, master):
@@ -143,10 +176,15 @@ class browseScene(tk.Frame):
         scrollBar = tk.Scrollbar(results)
 
         recomList = m.recommendations()
-        if len(recomList) != 0:
+        if len(recomList) > 20:
             for x in recomList:
                 results.insert(tk.END, x.name)
         else:
+            if m.custom is not None:
+                for x in m.custom:
+                    m.recommendedHistory.append(x)
+                    results.insert(tk.END, x.name)
+
             for x in range(20):
                 rando = random.randint(0, len(m.foodList))
                 m.recommendedHistory.append(m.foodList[rando])
@@ -244,10 +282,71 @@ class historyScene(tk.Frame):
         header = tk.Message(frame, text="History ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=400)
         header.pack(side="top")
 
-class customScene(tk.Frame)
+class customScene(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+
+        frame = tk.Frame(root, bg="#990000")
+        frame.place(relx=.2, relwidth=.8, relheight=1)
+
+        header = tk.Message(frame, text="Custom Recipe ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=300)
+        header.pack(side="top")
+
+        nameBox = tk.LabelFrame(frame, bg="#990000", text="Name of New Recipe", fg="white")
+        nameBox.place(relx=.1, rely=.15, relw=.8, relh=.075)
+        nameEntry = tk.Entry(nameBox)
+        nameEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        descBox = tk.LabelFrame(frame, bg="#990000", text="Description of New Recipe", fg="white")
+        descBox.place(relx=.1, rely=.25, relw=.8, relh=.075)
+        descEntry = tk.Entry(descBox)
+        descEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        tagsBox = tk.LabelFrame(frame, bg="#990000", text="Tags.  Please separate each tag by a comma ( , )", fg="white")
+        tagsBox.place(relx=.1, rely=.35, relw=.8, relh=.075)
+        tagEntry = tk.Entry(tagsBox)
+        tagEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        recipeBox = tk.LabelFrame(frame, bg="#990000", text="List of Ingredients.  Please separate each ingredient by a comma ( , )", fg="white")
+        recipeBox.place(relx=.1, rely=.45, relw=.8, relh=.075)
+        recipeEntry = tk.Entry(recipeBox)
+        recipeEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        prepBox = tk.LabelFrame(frame, bg="#990000", text="Prep Time", fg="white")
+        prepBox.place(relx=.1, rely=.55, relw=.375, relh=.075)
+        prepEntry = tk.Entry(prepBox)
+        prepEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        cookBox = tk.LabelFrame(frame, bg="#990000", text="Cook Time", fg="white")
+        cookBox.place(relx=.5, rely=.55, relw=.4, relh=.075)
+        cookEntry = tk.Entry(cookBox)
+        cookEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        servingBox = tk.LabelFrame(frame, bg="#990000", text="Serving Size", fg="white")
+        servingBox.place(relx=.1, rely=.65, relw=.375, relh=.075)
+        servingEntry = tk.Entry(servingBox)
+        servingEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        authorBox = tk.LabelFrame(frame, bg="#990000", text="Author", fg="white")
+        authorBox.place(relx=.5, rely=.65, relw=.4, relh=.075)
+        authorEntry = tk.Entry(authorBox)
+        authorEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        instrucBox = tk.LabelFrame(frame, bg="#990000", text="Instructions", fg="white")
+        instrucBox.place(relx=.1, rely=.75, relw=.8, relh=.075)
+        instrucEntry = tk.Entry(instrucBox)
+        instrucEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
+
+        confirm = tk.Button(frame, text="Confirm", command=lambda: m.createFood(nameEntry.get(), descEntry.get(), tagEntry.get(), prepEntry.get(), cookEntry.get(), servingEntry.get(), recipeEntry.get(), instrucEntry.get(), authorEntry.get()))
+        confirm.place(relx=.125, rely=.85, relw=.3, relh=.075)
+
+        reset = tk.Button(frame, text="Reset Fields", command=lambda: self.master.switchScene(customScene))
+        reset.place(relx=.55, rely=.85, relw=.3, relh=.075)
+
+# 0Name, 1Description, 2Tags, 3Prep Time, 4Cook Time, 5Servings, 6Recipe, 7Instructions, 8Picture, 9Author
 
 app = Application(master=root)
 
-app.master.title("The Computational Geniuses")
+app.master.title("The Computational Cookbook")
 
 app.mainloop()

@@ -29,6 +29,7 @@ class Menu:
         self.shoppingCart = []
         self.allFavorites = []
         self.recommendedHistory = []
+        self.custom = []
 
     def search(self, search):
         #self.history.append(search)
@@ -94,8 +95,13 @@ class Menu:
         # want to only use the top 1 thru 3 for recommendations
         return recommended
 
-    def createFood(self, name, recipe):
-        self.foodList.append(Food(name, recipe))
+    # 0Name, 1Description, 2Tags, 3Prep Time, 4Cook Time, 5Servings, 6Recipe, 7Instructions, 8Picture, 9Author
+    def createFood(self, name, desc, tags, prep, cook, serving, recipe, instruction, auth):
+        tags = tags.split(',')
+        recipe = recipe.split(',')
+        temp = Food(name, desc, tags, prep, cook, serving, recipe, instruction, "", auth)
+        self.foodList.append(temp)
+        self.custom.append(temp)
         # doesn't save in csv
 
     def addToFavorites(self, food_item: Food):
