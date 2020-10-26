@@ -116,20 +116,22 @@ class Menu:
     def removeFavorite(self, food_item: Food):
         food_item.isFavorite = False
         if food_item in self.allFavorites:
-            self.allIngredients.popitem()
+            self.allFavorites.remove(food_item)
 
     def printFavorites(self, results, tk):
         for x in self.allFavorites:
             results.insert(tk.END, x.name)
 
     def addToShoppingList(self, food_item: Food):
-        self.allIngredients = {}  # dictionary of { ingredient : number of times it appears }
-        self.shoppingCart.append(food_item)
+        for x in food_item.recipe:
+            self.shoppingCart.append(x)
+
+    def userAddToShoppingList(self, ingred):
+        self.shoppingCart.append(ingred)
 
     def printShoppingCart(self, results, tk):
         for x in self.shoppingCart:
-            for y in x.recipe:
-                results.insert(tk.END, y)
+            results.insert(tk.END, x)
 
     def printHistory(self, results, tk):
         for x in self.history:

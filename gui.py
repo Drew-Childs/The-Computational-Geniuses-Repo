@@ -11,7 +11,8 @@ root = tk.Tk()
 global m
 m = Menu()
 m.readRecipes()
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
+
+Featured = random.randint(0,len(m.foodList))
 
 class Application(tk.Frame):
     def __init__(self, master):
@@ -32,7 +33,7 @@ class Application(tk.Frame):
         b1 = tk.Button(sideBar, text="Favorites", command=lambda: self.switchScene(favoriteScene))
         b1.place(relx=.1, rely=.125, relw=.8, relh=.1)
 
-        b2 = tk.Button(sideBar, text="Browse", command=lambda: self.switchScene(browseScene))
+        b2 = tk.Button(sideBar, text="Recommended", command=lambda: self.switchScene(browseScene))
         b2.place(relx=.1, rely=.2375, relw=.8, relh=.1)
 
         b3 = tk.Button(sideBar, text="Search", command=lambda: self.switchScene(searchScene))
@@ -72,8 +73,13 @@ class Application(tk.Frame):
         # Title Label
         tk.Label(newWindow, text=food.name, font=tkFont.Font(size=20), bg="#990000", fg="white").pack(side="top")
 
+        try:
+            self.displayPicture(food, newWindow)
+        except:
+            pass
+
         # Description Label
-        tk.Label(newWindow, text=food.description, font=tkFont.Font(size=12), wraplength=200, bg="#990000", fg="white", justify="left").pack(side="top")
+        tk.Label(newWindow, text=food.description, font=tkFont.Font(size=12), wraplength=500, bg="#990000", fg="white", justify="left").pack(side="top")
 
         # Spacing Label
         tk.Label(newWindow, text="", bg="#990000").pack(side="top")
@@ -83,9 +89,12 @@ class Application(tk.Frame):
         tk.Label(newWindow, text=("{:10} {}".format("Cook Time: ", food.cookTime)), bg="#990000", fg="white").pack(side="top")
         tk.Label(newWindow, text=("{:10} {}".format("Servings: ", food.servings)), bg="#990000", fg="white").pack(side="top")
 
+        # Spacing Label
+        tk.Label(newWindow, text="", bg="#990000").pack(side="top")
+
         # Ingredients Listbox
         tk.Label(newWindow, text="Ingredients:", bg="#990000", fg="white").pack(side="top")
-        ingredients = tk.Listbox(newWindow, selectmode=tk.MULTIPLE, width=50, justify=tk.LEFT)
+        ingredients = tk.Listbox(newWindow, selectmode=tk.MULTIPLE, width=100, justify=tk.LEFT)
         for x in food.recipe:
             ingredients.insert(tk.END, x)
         ingredients.pack(side="top")
@@ -103,7 +112,7 @@ class Application(tk.Frame):
         # Spacing Label
         tk.Label(newWindow, text="", bg="#990000").pack(side="bottom")
 
-        # Favorites Listbox
+        # Favorites Button
         favorite = tk.Button(newWindow)
         if food.isFavorite:
             favorite.config(text="Unfavorite", command=lambda: m.removeFavorite(food))
@@ -115,13 +124,33 @@ class Application(tk.Frame):
         tk.Label(newWindow, text="", bg="#990000").pack(side="bottom")
 
         # Instructions Listbox
-        instructions = tk.Listbox(newWindow, selectmode=tk.MULTIPLE, width=50)
+        instructions = tk.Listbox(newWindow, selectmode=tk.MULTIPLE, width=100)
         for x in food.instructions:
             instructions.insert(tk.END, x)
         instructions.pack(side="bottom")
 
         # Instructions Label
         tk.Label(newWindow, text="Instructions:", bg="#990000", fg="white").pack(side="bottom")
+
+        # Spacing Label
+        tk.Label(newWindow, text="", bg="#990000").pack(side="bottom")
+
+    def displayPicture(self, food, newWindow):
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
+        req = Request(food.pic, headers=headers)  # Requests to open website
+        print(food.pic)
+        picture = urlopen(req).read()
+        im = Image.open(BytesIO(picture))
+
+        im = im.resize((200, 200), Image.ANTIALIAS)
+
+        canvas = tk.Canvas(newWindow, width=200, height=200)
+        canvas.pack()
+
+        canvas.image = ImageTk.PhotoImage(im)
+        canvas.create_image(100, 100, image=canvas.image, anchor=tk.CENTER)
 
 class menuScene(tk.Frame):
     def __init__(self, master):
@@ -131,9 +160,47 @@ class menuScene(tk.Frame):
         frame = tk.Frame(root, bg="#990000")
         frame.place(relx=.2, relwidth=.8, relheight=1)
 
+        # Spacing Label
+        tk.Label(frame, text="", bg="#990000").pack(side="top")
+
         # Creates title
-        header = tk.Message(frame, text="Menu ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=400)
+        header = tk.Message(frame, text="Welcome to the \nComputational Cookbook! ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=700, justify="center")
         header.pack(side="top")
+
+        tk.Label(frame, text="More recipes can be found at: https://www.simplyrecipes.com", bg="#990000", fg="white", font=tkFont.Font(size=10)).pack(side="bottom")
+
+        # Spacing Label
+        tk.Label(frame, text="", bg="#990000").pack(side="top")
+        tk.Label(frame, text="", bg="#990000").pack(side="top")
+        tk.Label(frame, text="", bg="#990000").pack(side="top")
+
+        tk.Label(frame, text="Featured Recipe: ", bg="#990000", fg="white", font=tkFont.Font(size=20)).pack(side="top")
+        tk.Label(frame, text=m.foodList[Featured].name, bg="#990000", fg="white", font=tkFont.Font(size=20)).pack(side="top")
+
+        # Spacing Label
+        tk.Label(frame, text="", bg="#990000").pack(side="top")
+
+        self.displayPicture(m.foodList[Featured], frame)
+
+        button = tk.Button(frame, text="Try this Recipe", command=lambda: self.master.displayDetails(m.foodList[Featured])).place(relx=.425, rely=.925, relw=.15, relh=.025)
+
+    def displayPicture(self, food, newWindow):
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
+        req = Request(food.pic, headers=headers)  # Requests to open website
+        print(food.pic)
+        picture = urlopen(req).read()
+        im = Image.open(BytesIO(picture))
+
+        im = im.resize((500, 500), Image.ANTIALIAS)
+
+        canvas = tk.Canvas(newWindow, width=500, height=500)
+        canvas.pack()
+
+        canvas.image = ImageTk.PhotoImage(im)
+        canvas.create_image(250, 250, image=canvas.image, anchor=tk.CENTER)
+
 
 class favoriteScene(tk.Frame):
     def __init__(self, master):
@@ -147,6 +214,10 @@ class favoriteScene(tk.Frame):
             # Creates title
             header = tk.Message(frame, text="Favorites ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=400)
             header.pack(side="top")
+
+            descr = tk.Label(frame,
+                             text="Below you will find all your favorited recipes!",
+                             bg="#990000", fg="white", font=tkFont.Font(size=12)).pack(side="top")
 
             # Creates results Listbox and the scrollbar associated with it
             results = tk.Listbox(frame)
@@ -178,12 +249,17 @@ class browseScene(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
 
+        m.recommendedHistory.clear()
         # Creates frame to hold other widgets
         frame = tk.Frame(root, bg="#990000")
         frame.place(relx=.2, relwidth=.8, relheight=1)
 
-        header = tk.Message(frame, text="Browse ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=300)
+        header = tk.Message(frame, text="Recommended ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=300)
         header.pack(side="top")
+
+        descr = tk.Label(frame,
+                         text="Below you will find recipes tailored just for you!",
+                         bg="#990000", fg="white", font=tkFont.Font(size=12)).pack(side="top")
 
         results = tk.Listbox(frame)
         scrollBar = tk.Scrollbar(results)
@@ -213,6 +289,7 @@ class browseScene(tk.Frame):
         viewMore.config(command=lambda: self.master.displayDetails(m.recommendedHistory[results.curselection()[0]]))  # Need to grab food object
         viewMore.place(relx=.825, rely=.45, relh=.1, relw=.15)
 
+
 class searchScene(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
@@ -223,6 +300,10 @@ class searchScene(tk.Frame):
 
         header = tk.Message(self.frame, text="Search ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=300)
         header.pack(side="top")
+
+        descr = tk.Label(self.frame,
+                         text="Search 1900+ recipes below with any keyword!",
+                         bg="#990000", fg="white", font=tkFont.Font(size=12)).pack(side="top")
 
         searchBar = tk.Entry(self.frame, bd=4)
         searchBar.place(relx=.1, rely=.15, relw=.7)
@@ -261,18 +342,42 @@ class shoppingCartScene(tk.Frame):
         frame = tk.Frame(root, bg="#990000")
         frame.place(relx=.2, relwidth=.8, relheight=1)
 
-        results = tk.Listbox(frame)
-        scrollBar = tk.Scrollbar(results)
-
-        m.printShoppingCart(results, tk)
-
-        results.place(relx=.1, rely=.22, relw=.7, relh=.6)
-        results.config(yscrollcommand=scrollBar.set)
-        scrollBar.pack(side="right", fill="y")
-        scrollBar.config(command=results.yview)
-
         header = tk.Message(frame, text="Shopping Cart ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=400)
         header.pack(side="top")
+
+        descr = tk.Label(frame, text=" All ingredients from recipes you've added to your shopping cart will appear below!",
+                         bg="#990000", fg="white", font=tkFont.Font(size=12)).pack(side="top")
+
+        self.results = tk.Listbox(frame)
+        scrollBar = tk.Scrollbar(self.results)
+
+        m.printShoppingCart(self.results, tk)
+
+        self.results.place(relx=.125, rely=.125, relw=.7, relh=.6)
+        self.results.config(yscrollcommand=scrollBar.set)
+        scrollBar.pack(side="right", fill="y")
+        scrollBar.config(command=self.results.yview)
+
+        entry = tk.Entry(frame)
+        entry.place(relw=.7, relh=.025, relx=.125, rely=.8)
+
+        addButton = tk.Button(frame, text="Add Item", command=lambda: self.addToCart(entry.get())).place(relx=.175, rely=.85, relw=.175, relh=.05)
+        removeButton = tk.Button(frame, text="Delete Selected Item", command=lambda: self.removeFromCart(self.results.curselection()[0])).place(relx=.375, rely=.85, relw=.175, relh=.05)
+        clearButton = tk.Button(frame, text="Clear Shopping Cart", command=lambda: self.clearCart()).place(relx=.575, rely=.85, relw=.175, relh=.05)
+
+    def addToCart(self, entry):
+        m.userAddToShoppingList(entry)
+        self.results.insert(tk.END, entry)
+
+    def removeFromCart(self, i):
+        m.shoppingCart.pop(i)
+        self.master.switchScene(shoppingCartScene)
+
+    def clearCart(self):
+        m.shoppingCart.clear()
+        self.master.switchScene(shoppingCartScene)
+
+
 
 class historyScene(tk.Frame):
     def __init__(self, master):
@@ -286,12 +391,15 @@ class historyScene(tk.Frame):
         header = tk.Message(frame, text="History ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=400)
         header.pack(side="top")
 
+        descr = tk.Label(frame, text=" All recipes you've searched or clicked on will appear below!",
+                         bg="#990000", fg="white", font=tkFont.Font(size=12)).pack(side="top")
+
         results = tk.Listbox(frame)
         scrollBar = tk.Scrollbar(results)
 
         m.printHistory(results, tk)
 
-        results.place(relx=.1, rely=.1, relw=.7, relh=.8)  # sizing and placement of results box
+        results.place(relx=.1, rely=.15, relw=.7, relh=.8)  # sizing and placement of results box
         results.config(yscrollcommand=scrollBar.set)  # Connects scrollbar to results box size
         scrollBar.pack(side="right", fill="y")  # Sets the scrollbar to the right of the box, and fills vertically
         scrollBar.config(command=results.yview)  # Allows scroll bar to take control of box
@@ -310,6 +418,8 @@ class customScene(tk.Frame): # Class for Custom Recipe
         # Creates a text message above indicating which page the user is on
         header = tk.Message(frame, text="Custom Recipe ", bg="#990000", fg="white", font=tkFont.Font(size=30), width=300)
         header.pack(side="top")
+
+        descr = tk.Label(frame, text=" Add your own recipes to the database below to easily search for them!", bg="#990000", fg="white", font=tkFont.Font(size=12)).pack(side="top")
 
         # Creates text box and Label for Name
         nameBox = tk.LabelFrame(frame, bg="#990000", text="Name of New Recipe", fg="white")
@@ -366,14 +476,17 @@ class customScene(tk.Frame): # Class for Custom Recipe
         instrucEntry.place(relx=.025, rely=.1, relw=.95, relh=.7)
 
         # Pulls all entries within Entry boxes and creates a new Food object with said arguments
-        confirm = tk.Button(frame, text="Confirm", command=lambda: m.createFood(nameEntry.get(), descEntry.get(), tagEntry.get(), prepEntry.get(), cookEntry.get(), servingEntry.get(), recipeEntry.get(), instrucEntry.get(), authorEntry.get()))
+        confirm = tk.Button(frame, text="Confirm", command=lambda: self.addCustom(nameEntry.get(), descEntry.get(), tagEntry.get(), prepEntry.get(), cookEntry.get(),
+                     servingEntry.get(), recipeEntry.get(), instrucEntry.get(), authorEntry.get()))
         confirm.place(relx=.125, rely=.85, relw=.3, relh=.075)
 
         # Reinitalizes the frame, which resets all entries
         reset = tk.Button(frame, text="Reset Fields", command=lambda: self.master.switchScene(customScene))
         reset.place(relx=.55, rely=.85, relw=.3, relh=.075)
 
-
+    def addCustom(self,name, desc, tag, prep, cook, serv, reci, inst, auth):
+        m.createFood(name, desc, tag, prep, cook, serv, reci, inst, auth)
+        self.master.switchScene(customScene)
 
 app = Application(master=root)
 
