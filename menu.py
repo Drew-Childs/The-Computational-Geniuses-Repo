@@ -67,7 +67,10 @@ class Menu:
                 old_tags = row[2]
                 new_tags = rebuildString(old_tags).split(',')
 
-                self.foodList.append(Food(row[0], row[1], new_tags, row[3], row[4], row[5], new_recipe, row[7], row[8], row[9]))
+                old_instruction = row[7]
+                new_instruction = rebuildString(old_instruction).split('.')
+
+                self.foodList.append(Food(row[0], row[1], new_tags, row[3], row[4], row[5], new_recipe, new_instruction, row[8], row[9]))
 
         # 0Name, 1Description, 2Tags, 3Prep Time, 4Cook Time, 5Servings, 6Recipe, 7Instructions, 8Picture, 9Author
 
@@ -99,6 +102,7 @@ class Menu:
     def createFood(self, name, desc, tags, prep, cook, serving, recipe, instruction, auth):
         tags = tags.split(',')
         recipe = recipe.split(',')
+        instruction = instruction.split(',')
         temp = Food(name, desc, tags, prep, cook, serving, recipe, instruction, "", auth)
         self.foodList.append(temp)
         self.custom.append(temp)
@@ -130,6 +134,3 @@ class Menu:
     def printHistory(self, results, tk):
         for x in self.history:
             results.insert(tk.END, x.name)
-
-
-
